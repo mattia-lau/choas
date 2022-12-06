@@ -8,5 +8,6 @@ RUN CGO_ENABLED=1 GOOS=linux go build -o main -a -ldflags '-extldflags "-static"
 
 FROM alpine
 COPY --from=builder /build/main .
+COPY --from=builder /build/.env .
 EXPOSE 8080
 CMD ["./main"]

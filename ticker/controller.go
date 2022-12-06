@@ -41,7 +41,6 @@ func HandleLastPrice(c *gin.Context) {
 func HandleGetPriceByDate(c *gin.Context) {
 	date, _ := time.ParseInLocation(time.RFC3339, c.Param("date"), time.UTC)
 	accurated := time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0, 0, time.UTC)
-	print(accurated.UnixMilli())
 	symbol := c.Param("symbol")
 	resp, error := GetPriceByDate(symbol, accurated)
 

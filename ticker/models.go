@@ -21,7 +21,6 @@ type Aggregates struct {
 
 func SaveOne(data interface{}) error {
 	db := common.GetDB()
-	print(db)
 	err := db.Create(data)
 
 	return err.Error
