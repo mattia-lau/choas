@@ -2,3 +2,6 @@ env: test
 
 db:
   path: test.db
+  migrate:
+    enable: true
+    dir: ../migrations/sql
