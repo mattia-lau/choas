@@ -12,15 +12,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.19
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ${{ steps.setup_go.outputs.GOCACHE }}
-            ${{ steps.setup_go.outputs.GOMODCACHE }}
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          cache: true
 
       - name: Download Go modules
         run: go mod download
