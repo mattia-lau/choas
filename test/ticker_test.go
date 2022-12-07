@@ -1,8 +1,8 @@
 package test
 
 import (
-	"chaos-go/common"
-	"chaos-go/ticker"
+	"chaos-go/internal/database"
+	"chaos-go/internal/ticker"
 	"testing"
 	"time"
 
@@ -10,8 +10,8 @@ import (
 )
 
 func TestSaveTicker(t *testing.T) {
-	common.Init("test.db")
-	common.GetDB().AutoMigrate(ticker.Ticker{}, ticker.Aggregates{})
+	database.Init("test.db")
+	database.GetDB().AutoMigrate(ticker.Ticker{}, ticker.Aggregates{})
 	asserts := assert.New(t)
 
 	now := time.Now()
@@ -26,8 +26,8 @@ func TestSaveTicker(t *testing.T) {
 }
 
 func TestSaveAggreate(t *testing.T) {
-	common.Init("test.db")
-	common.GetDB().AutoMigrate(ticker.Ticker{}, ticker.Aggregates{})
+	database.Init("test.db")
+	database.GetDB().AutoMigrate(ticker.Ticker{}, ticker.Aggregates{})
 	asserts := assert.New(t)
 
 	now := time.Now()
