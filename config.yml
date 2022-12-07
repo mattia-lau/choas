@@ -1,0 +1,10 @@
+env: dev
+
+db:
+  path: chaos.db
+  migrate:
+    enable: true
+    dir: migrations/sql
+
+server:
+  port: 8080

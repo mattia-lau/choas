@@ -1,8 +1,9 @@
 package database
 
 import (
-	"fmt"
+	"chaos-go/internal/config"
 
+	"go.uber.org/zap"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -14,12 +15,17 @@ type Database struct {
 var DB *gorm.DB
 
 // Opening a database and save the reference to `Database` struct.
-func Init(path string) *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(path), &gorm.Config{})
+func Init(cfg *config.Config, logger *zap.Logger) *gorm.DB {
+	db, err := gorm.Open(sqlite.Open(cfg.DBConfig.Path), &gorm.Config{})
 	if err != nil {
-		fmt.Println("db err: (Init) ", err)
+		logger.Error("db err: (Init) ", zap.Error(err))
 	}
 	DB = db
+
+	if cfg.DBConfig.Migrate.Enable {
+		RunMigration(cfg, logger)
+	}
+
 	return DB
 }
 

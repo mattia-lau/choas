@@ -2,16 +2,17 @@ package ticker
 
 import (
 	"chaos-go/internal/datasource"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/robfig/cron/v3"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
-	tickerService TickerService
+	repository TickerRepository
 }
 
 func (handler Handler) AveragePriceHandler(c *gin.Context) {
@@ -22,8 +23,12 @@ func (handler Handler) AveragePriceHandler(c *gin.Context) {
 	}
 
 	symbol := c.Param("symbol")
+	if _, err := handler.repository.GetTicker(symbol); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": fmt.Sprintf("%s not found", symbol)})
+		return
+	}
 
-	resp, error := handler.tickerService.GetAveragePrice(symbol, timerange.Start, timerange.End)
+	resp, error := handler.repository.GetAveragePrice(symbol, timerange.Start, timerange.End)
 
 	if error != nil {
 		panic(error)
@@ -34,7 +39,12 @@ func (handler Handler) AveragePriceHandler(c *gin.Context) {
 
 func (handler Handler) LastPriceHandler(c *gin.Context) {
 	symbol := c.Param("symbol")
-	resp, error := handler.tickerService.GetLastPrice(symbol)
+	if _, err := handler.repository.GetTicker(symbol); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": fmt.Sprintf("%s not found", symbol)})
+		return
+	}
+
+	resp, error := handler.repository.GetLastPrice(symbol)
 
 	if error != nil {
 		panic(error)
@@ -44,61 +54,54 @@ func (handler Handler) LastPriceHandler(c *gin.Context) {
 }
 
 func (handler Handler) GetPriceByDateHandler(c *gin.Context) {
-	date, _ := time.ParseInLocation(time.RFC3339, c.Param("date"), time.UTC)
+	validator := DateValidator{}
+	if err := c.ShouldBindUri(&validator); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": fmt.Sprintf("%v", err)})
+		return
+	}
+
+	date := validator.Date
+	symbol := validator.Symbol
+
+	if _, err := handler.repository.GetTicker(symbol); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": fmt.Sprintf("%s not found", symbol)})
+		return
+	}
+
 	accurated := time.Date(date.Year(), date.Month(), date.Day(), date.Hour(), date.Minute(), 0, 0, time.UTC)
-	symbol := c.Param("symbol")
-	resp, error := handler.tickerService.GetPriceByDate(symbol, accurated)
+	resp, error := handler.repository.GetPriceByDate(symbol, accurated)
 
-	if error != nil {
-		if error.Error() == "record not found" {
-			println("Get data from provider")
-			aggs, err := datasource.GetPriceByDate("BTC", accurated)
+	if errors.Is(error, gorm.ErrRecordNotFound) {
+		println("Get data from provider", accurated.Format(time.RFC3339))
+		aggs, err := datasource.GetPriceByDate("BTC", accurated)
 
-			if err != nil {
-				panic(err)
+		if err != nil {
+			panic(err)
+		}
+
+		if len(aggs.Entries) > 0 {
+			aggregate := &Aggregates{
+				Price:  aggs.Entries[0][1],
+				Symbol: symbol,
+				Date:   accurated,
 			}
-
-			if len(aggs.Entries) > 0 {
-				aggregate := &Aggregates{
-					Price:  aggs.Entries[0][1],
-					Symbol: symbol,
-					Date:   accurated,
-				}
-				SaveOne(aggregate)
-				c.JSON(http.StatusOK, aggregate)
-				return
-			}
+			handler.repository.SaveOne(aggregate)
+			c.JSON(http.StatusOK, aggregate)
+			return
 		}
 	}
 
 	c.JSON(http.StatusOK, resp)
 }
 
-func (handler Handler) CreateCronJob() {
-	cron := cron.New()
-	cron.AddFunc("*/1 * * * *", func() {
-		symbol := "BTCUSD"
-		resp, _ := datasource.GetLatestPrice()
-
-		_, error := handler.tickerService.tickerRepository.GetOrCreateTicker(symbol)
-
-		if error != nil {
-			println(error.Error())
-			return
-		}
-
-		SaveOne(&Aggregates{
-			Symbol: symbol,
-			Price:  resp.Bpi.USD.Price,
-			Date:   time.Now(),
-		})
-	})
-
-	cron.Start()
+func NewHandler(repository TickerRepository) *Handler {
+	return &Handler{
+		repository: repository,
+	}
 }
 
-func NewHandler(tickerService TickerService) *Handler {
-	return &Handler{
-		tickerService: tickerService,
-	}
+func Route(r *gin.Engine, h *Handler) {
+	r.GET("/last/ticker/:symbol", h.LastPriceHandler)
+	r.GET("/average/ticker/:symbol", h.AveragePriceHandler)
+	r.GET("/:date/ticker/:symbol", h.GetPriceByDateHandler)
 }
