@@ -30,7 +30,9 @@ func (a tickerDB) SaveOne(data interface{}) error {
 func (a tickerDB) GetLastPrice(symbol string) (Aggregates, error) {
 	var aggregate Aggregates
 	db := database.GetDB()
-	resp := db.Table("aggregates").Last(&aggregate, "symbol = ?", symbol)
+	resp := db.
+		Raw("SELECT * FROM `aggregates` WHERE symbol = ? ORDER BY date DESC LIMIT 1", symbol).
+		First(&aggregate)
 
 	return aggregate, resp.Error
 }

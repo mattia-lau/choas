@@ -28,10 +28,11 @@ func (handler Handler) AveragePriceHandler(c *gin.Context) {
 		return
 	}
 
-	resp, error := handler.repository.GetAveragePrice(symbol, timerange.Start, timerange.End)
+	resp, err := handler.repository.GetAveragePrice(symbol, timerange.Start, timerange.End)
 
-	if error != nil {
-		panic(error)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": fmt.Sprintf("%v", err)})
+		return
 	}
 
 	c.JSON(http.StatusOK, resp)
@@ -44,10 +45,11 @@ func (handler Handler) LastPriceHandler(c *gin.Context) {
 		return
 	}
 
-	resp, error := handler.repository.GetLastPrice(symbol)
+	resp, err := handler.repository.GetLastPrice(symbol)
 
-	if error != nil {
-		panic(error)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": fmt.Sprintf("%v", err)})
+		return
 	}
 
 	c.JSON(http.StatusOK, resp)
@@ -76,7 +78,8 @@ func (handler Handler) GetPriceByDateHandler(c *gin.Context) {
 		aggs, err := datasource.GetPriceByDate("BTC", accurated)
 
 		if err != nil {
-			panic(err)
+			c.JSON(http.StatusBadRequest, gin.H{"errors": fmt.Sprintf("%v", err)})
+			return
 		}
 
 		if len(aggs.Entries) > 0 {

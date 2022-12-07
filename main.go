@@ -54,7 +54,7 @@ func main() {
 		),
 		fx.Invoke(
 			ticker.Route,
-			ticker.CreateCronJob,
+			// ticker.CreateCronJob,
 		),
 	)
 	app.Run()
