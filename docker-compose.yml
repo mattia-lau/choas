@@ -7,4 +7,4 @@ services:
     ports:
       - 8080:8080
     volumes:
-      - ./chaos.db:/app/choas.db
+      - ./chaos.db:/app/chaos.db
