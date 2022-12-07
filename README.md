@@ -18,7 +18,7 @@ brew install mockery
 ## Docker
 ```sh
 docker build -t choas-backend .
-docker run -p 8080:8080 -v "$(pwd)/chaos.db:/app/choas.db" choas 
+docker run -d -p 8080:8080 -v "$(pwd)/chaos.db:/app/choas.db" choas 
 ```
 
 ## Docker Compose
