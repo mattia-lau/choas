@@ -6,3 +6,5 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8080:8080
+    volumes:
+      - ./chaos.db:/app/choas.db
