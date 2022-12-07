@@ -1,6 +1,6 @@
 .PHONY: test
 test:
-	go test ./test -v
+	go test -v ./...
 
 .PHONY: start-server
 start-server:
