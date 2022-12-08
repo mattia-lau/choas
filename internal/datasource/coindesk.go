@@ -49,11 +49,14 @@ type chartApiResponse struct {
 func GetPriceByDate(symbol string, date time.Time) (*chartApiResponse, error) {
 	client := resty.New()
 
+	startDate := date.Format("2006-01-02T15:04")
+	endDate := date.Add(time.Minute * time.Duration(1)).Format("2006-01-02T15:04")
+
 	query := &requestQuery{
-		EndDate:   "2022-12-06T14:09",
+		EndDate:   endDate,
 		ISO:       symbol,
 		OHLC:      false,
-		StartDate: "2022-12-06T14:08",
+		StartDate: startDate,
 	}
 
 	jsonString, err := json.Marshal(query)
